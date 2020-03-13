@@ -1,0 +1,297 @@
+SELECT DISTINCT 
+                      ttf.[TerminalTransactionKey], [StartTime], nd.MachineName, nd.MachineId, nd.Country, nd.Region, [HostTransactionID], [CardNumber], [Amount], 
+                      ttd.TransactionTypeKey[TransactionTypeKey], ttd.[Name] [TransactionType], ttf.[LocalDateKey], ttf.[LocalTimeOfDayKey], 
+                      ttsd.TerminalTransactionStatusKey[TerminalTransactionStatusKey], ttsd.Value[TransactionStatus], ttdf.TerminalTransactionDataNameKey[HostTokenKey], 
+                      ttdf.Value[HostToken], cqf.RecognizedCodeline, [Attempts], gtsd.[GatewayTransmissionStatusKey], gtsd.Name[GatewayStatus], gtrd.[GatewayTransmissionResultKey], 
+                      gtrd.Name[GatewayResultStatus], tttf.TrackingKey[Gatway_Tracking_Key], SWITCHOFFSET(CAST(tttf.[Timestamp] AS DATETIMEOFFSET), RIGHT(ttf.StartTime, 6)) 
+                      [GatewaySendTime], SWITCHOFFSET(CAST(ttgrf.[Timestamp] AS DATETIMEOFFSET), RIGHT(ttf.StartTime, 6)) 
+                      [FacadeResponseTime]/* Gateway timestamp when transaction was accepted successfully*/ , SWITCHOFFSET(CAST(ttf.[RowCreateTimestamp] AS DATETIMEOFFSET), 
+                      RIGHT(ttf.StartTime, 6)) [RowCreateTimestamp], CAST(ttgrf.ResponseXML AS nvarchar(max)) [ResponseXML], 
+                      RTRIM(LTRIM(SUBSTRING(CAST(ttgrf.ResponseXML AS nvarchar(max)), CHARINDEX('<ReasonCD>', CAST(ttgrf.ResponseXML AS nvarchar(max))) 
+                      + LEN('<ReasonCD>'), CHARINDEX('</ReasonCD>', CAST(ttgrf.ResponseXML AS nvarchar(max)), CHARINDEX('<ReasonCD>', 
+                      CAST(ttgrf.ResponseXML AS nvarchar(max)))) - (CHARINDEX('<ReasonCD>', CAST(ttgrf.ResponseXML AS nvarchar(max))) + LEN('<ReasonCD>'))))) [ReasonCode], 
+                      RTRIM(LTRIM(SUBSTRING(CAST(ttgrf.ResponseXML AS nvarchar(max)), CHARINDEX('<Description>', CAST(ttgrf.ResponseXML AS nvarchar(max))) 
+                      + LEN('<Description>'), CHARINDEX('</Description>', CAST(ttgrf.ResponseXML AS nvarchar(max)), CHARINDEX('<Description>', 
+                      CAST(ttgrf.ResponseXML AS nvarchar(max)))) - (CHARINDEX('<Description>', CAST(ttgrf.ResponseXML AS nvarchar(max))) + LEN('<Description>'))))) 
+                      [ReasonDescription], DENSE_RANK() OVER (PARTITION BY ttf.terminaltransactionkey
+ORDER BY tttf.Timestamp DESC, tttf.trackingkey DESC) [rank]
+FROM         [CommanderWarehouse].[dbo].[TerminalTransactionFact] ttf WITH (nolock) INNER JOIN
+                      [CommanderWarehouse].[dbo].[NodeDimension] nd WITH (nolock) ON ND.NodeKey = TTF.NodeKey LEFT JOIN
+                      [CommanderWarehouse].[dbo].[TerminalTransactionTrackingFact] tttf WITH (nolock) ON ttf.TerminalTransactionKey = tttf.TerminalTransactionKey LEFT JOIN
+                      [CommanderWarehouse].[dbo].[TransactionTypeDimension] ttd ON ttd.TransactionTypeKey = ttf.TransactionTypeKey LEFT JOIN
+                      [CommanderWarehouse].[dbo].[TerminalTransactionStatusDimension] ttsd ON ttsd.TerminalTransactionStatusKey = ttf.TerminalTransactionStatusKey LEFT JOIN
+                      CommanderWarehouse.dbo.[TerminalTransactionGatewayResponseFact] ttgrf ON ttgrf.TerminalTransactionTrackingKey = tttf.TrackingKey LEFT JOIN
+                      CommanderWarehouse.dbo.[GatewayTransmissionStatusDimension] gtsd ON gtsd.GatewayTransmissionStatusKey = tttf.GatewayTransmissionStatusKey LEFT JOIN
+                      CommanderWarehouse.dbo.[GatewayTransmissionResultDimension] gtrd ON gtrd.GatewayTransmissionResultKey = ttgrf.GatewayTransmissionResultKey LEFT JOIN
+                      CommanderWarehouse.dbo.[TerminalTransactionDataFact] ttdf ON ttdf.TerminalTransactionKey = ttf.TerminalTransactionKey LEFT JOIN
+                      CommanderWarehouse.dbo.[ChequeFact] cqf ON cqf.TerminalTransactionKey = ttf.TerminalTransactionKey LEFT JOIN
+                      CommanderWarehouse.dbo.[CashFact] cf ON cf.TerminalTransactionKey = ttf.TerminalTransactionKey
+WHERE     ttf.TransactionTypeKey <= 4
+and 
+(
+
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0925')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0935')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0941')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0944')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0962')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0967')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0969')) OR
+(LocalDateKey=20180419 And MachineId ='TD1282' and HostTransactionID in ('0981')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1852')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1880')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1893')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1895')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1901')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1956')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1967')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1984')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1990')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('1995')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('2016')) OR
+(LocalDateKey=20180419 And MachineId ='TD1589' and HostTransactionID in ('2029')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6938')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6940')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6951')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6954')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6957')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('6969')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7001')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7010')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7013')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7017')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7019')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7021')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7023')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7025')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7031')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7033')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7035')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7042')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7045')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7051')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7053')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7056')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7066')) OR
+(LocalDateKey=20180419 And MachineId ='TD1681' and HostTransactionID in ('7076')) OR
+(LocalDateKey=20180419 And MachineId ='TD1778' and HostTransactionID in ('7669')) OR
+(LocalDateKey=20180419 And MachineId ='TD1778' and HostTransactionID in ('7672')) OR
+(LocalDateKey=20180419 And MachineId ='TD1778' and HostTransactionID in ('7724')) OR
+(LocalDateKey=20180419 And MachineId ='TD1778' and HostTransactionID in ('7743')) OR
+(LocalDateKey=20180419 And MachineId ='TD1778' and HostTransactionID in ('7746')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1225')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1227')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1233')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1238')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1242')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1251')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1257')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1268')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1283')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1286')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1289')) OR
+(LocalDateKey=20180419 And MachineId ='TD1978' and HostTransactionID in ('1292')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3178')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3181')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3183')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3185')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3187')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3190')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3215')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3252')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3283')) OR
+(LocalDateKey=20180419 And MachineId ='TD2027' and HostTransactionID in ('3286')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0288')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0297')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0317')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0320')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0323')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0335')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0338')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0346')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0353')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0367')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0369')) OR
+(LocalDateKey=20180419 And MachineId ='TD2539' and HostTransactionID in ('0377')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2365')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2376')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2378')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2406')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2434')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2436')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2441')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2444')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2457')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2463')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2481')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2496')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2541')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2549')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2589')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2597')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2622')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2634')) OR
+(LocalDateKey=20180419 And MachineId ='TD2621' and HostTransactionID in ('2636')) OR
+(LocalDateKey=20180419 And MachineId ='TD2793' and HostTransactionID in ('8321')) OR
+(LocalDateKey=20180419 And MachineId ='TD2793' and HostTransactionID in ('8348')) OR
+(LocalDateKey=20180419 And MachineId ='TD2793' and HostTransactionID in ('8371')) OR
+(LocalDateKey=20180419 And MachineId ='TD2948' and HostTransactionID in ('9083')) OR
+(LocalDateKey=20180419 And MachineId ='TD2948' and HostTransactionID in ('9107')) OR
+(LocalDateKey=20180419 And MachineId ='TD2948' and HostTransactionID in ('9115')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9061')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9065')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9071')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9080')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9087')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9102')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9128')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9137')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9139')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9141')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9151')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9163')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9173')) OR
+(LocalDateKey=20180419 And MachineId ='TD3041' and HostTransactionID in ('9179')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1708')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1714')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1719')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1738')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1744')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1751')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1763')) OR
+(LocalDateKey=20180419 And MachineId ='TD3437' and HostTransactionID in ('1766')) OR
+(LocalDateKey=20180419 And MachineId ='TD3522' and HostTransactionID in ('4629')) OR
+(LocalDateKey=20180419 And MachineId ='TD3522' and HostTransactionID in ('4652')) OR
+(LocalDateKey=20180419 And MachineId ='TD3522' and HostTransactionID in ('4678')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9908')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9919')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9931')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9937')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9940')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9958')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9961')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9963')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('9981')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0004')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0011')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0055')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0061')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0064')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0067')) OR
+(LocalDateKey=20180419 And MachineId ='TD3544' and HostTransactionID in ('0083')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('1843')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('1852')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('1886')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('1943')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('1955')) OR
+(LocalDateKey=20180419 And MachineId ='TD3587' and HostTransactionID in ('2011')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5423')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5425')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5430')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5433')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5438')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5443')) OR
+(LocalDateKey=20180419 And MachineId ='TD3652' and HostTransactionID in ('5447')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5001')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5007')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5010')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5020')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5023')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5043')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5052')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5073')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5095')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5097')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5108')) OR
+(LocalDateKey=20180419 And MachineId ='TD6120' and HostTransactionID in ('5121')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4739')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4749')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4763')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4785')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4792')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4797')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4813')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4816')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4827')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4833')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4838')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4844')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4849')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4861')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4887')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4902')) OR
+(LocalDateKey=20180419 And MachineId ='TD6264' and HostTransactionID in ('4923')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9497')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9506')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9518')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9521')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9528')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9533')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9536')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9541')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9544')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9572')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9575')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9578')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9594')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9598')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9617')) OR
+(LocalDateKey=20180419 And MachineId ='TD6460' and HostTransactionID in ('9620')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0477')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0492')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0495')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0506')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0509')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0514')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0528')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0533')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0541')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0544')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0564')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0594')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0597')) OR
+(LocalDateKey=20180419 And MachineId ='TD7148' and HostTransactionID in ('0600')) OR
+(LocalDateKey=20180419 And MachineId ='TD8544' and HostTransactionID in ('6278')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('8938')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('8988')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9008')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9018')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9026')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9042')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9066')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9069')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9071')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9074')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9077')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9092')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9097')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9125')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9145')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9148')) OR
+(LocalDateKey=20180419 And MachineId ='TD8986' and HostTransactionID in ('9179')) OR
+(LocalDateKey=20180419 And MachineId ='TD9292' and HostTransactionID in ('6003')) OR
+(LocalDateKey=20180419 And MachineId ='TD9292' and HostTransactionID in ('6005')) OR
+(LocalDateKey=20180419 And MachineId ='TD9292' and HostTransactionID in ('6008')) OR
+(LocalDateKey=20180419 And MachineId ='TD9292' and HostTransactionID in ('6044')) OR
+(LocalDateKey=20180419 And MachineId ='TD9292' and HostTransactionID in ('6059')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7803')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7806')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7821')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7824')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7836')) OR
+(LocalDateKey=20180419 And MachineId ='TD9294' and HostTransactionID in ('7844')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9372')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9384')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9400')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9418')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9427')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9446')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9465')) OR
+(LocalDateKey=20180419 And MachineId ='TD9461' and HostTransactionID in ('9468')) 
+
+
+
+
+
+
+)

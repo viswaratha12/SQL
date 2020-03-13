@@ -1,0 +1,9 @@
+-- Very Quick Count (doesn't use table scan like select count(*) does)
+select	object_name(spart.object_id)	as TableName,
+		sum (spart.rows)				as TableRowCount
+from	sys.partitions spart
+--where	spart.object_id = object_id('ScenarioSetScenario')
+--and		spart.index_id < 2
+where	spart.index_id < 2
+group by spart.object_id
+order by 2 desc

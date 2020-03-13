@@ -1,0 +1,19 @@
+--Queries with most impact
+
+SELECT	SUM(highest_cpu_queries.total_worker_time) [Total CPU Time], 
+		SUM(highest_cpu_queries.execution_count) [No of Executions],
+		SUM(highest_cpu_queries.last_worker_time) [Run Once Time],
+		MIN(creation_time) [Since],
+		q.[text] [SQL]
+FROM	(SELECT TOP 50  
+				qs.plan_handle,  
+				qs.total_worker_time,
+				qs.execution_count,
+				qs.last_worker_time,
+				creation_time
+		FROM	sys.dm_exec_query_stats qs 
+		ORDER BY qs.total_worker_time DESC) AS highest_cpu_queries 
+    CROSS APPLY sys.dm_exec_sql_text(plan_handle) AS q 
+
+GROUP BY q.text
+ORDER BY sum(highest_cpu_queries.total_worker_time) DESC

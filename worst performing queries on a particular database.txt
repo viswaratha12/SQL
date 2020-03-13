@@ -1,0 +1,114 @@
+select * from
+-- CPU cache SQL-Server
+(select top 20 
+                stat.execution_count as execution_count,
+                stat.total_logical_reads as total_logical_read,
+                stat.total_worker_time as total_cpu,
+                cache.objtype,
+                req.text,
+                '2 CPU' as typeOf,
+                row_number() OVER (ORDER BY stat.total_worker_time desc) as rownum
+from sys.dm_exec_query_stats AS stat
+CROSS APPLY sys.dm_exec_sql_text(stat.sql_handle) as req
+CROSS APPLY    sys.dm_exec_query_plan(stat.plan_handle)    AS pl
+left join sys.dm_exec_cached_plans as cache on cache.plan_handle = stat.plan_handle
+WHERE    OBJECT_NAME((SELECT OBJECTID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) IS NOT NULL 
+         AND DB_NAME((SELECT DBID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) = 'CommanderMessageQueue'
+                                                                       
+--ORDER BY DB_NAME((SELECT DBID
+--                  FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))),
+--         TOTAL_WORKER_TIME / EXECUTION_COUNT DESC
+
+order by total_cpu desc
+union
+select top 20 
+                stat.execution_count as execution_count,
+                stat.total_logical_reads as total_logical_read,
+                stat.total_worker_time as total_cpu,
+                cache.objtype,
+                req.text,
+                '3 Logical Read' as typeOf,
+                row_number() OVER (ORDER BY stat.total_logical_reads desc) as rownum
+from sys.dm_exec_query_stats AS stat
+CROSS APPLY sys.dm_exec_sql_text(stat.sql_handle) as req
+CROSS APPLY    sys.dm_exec_query_plan(stat.plan_handle)    AS pl
+left join sys.dm_exec_cached_plans as cache on cache.plan_handle = stat.plan_handle
+WHERE    OBJECT_NAME((SELECT OBJECTID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) IS NOT NULL 
+         AND DB_NAME((SELECT DBID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) = 'CommanderMessageQueue'
+                                                                       
+--ORDER BY DB_NAME((SELECT DBID
+--                  FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))),
+--         TOTAL_WORKER_TIME / EXECUTION_COUNT DESC
+
+order by total_logical_read desc
+union
+select top 20 
+                stat.execution_count as execution_count,
+                stat.total_logical_reads as total_logical_read,
+                stat.total_worker_time as total_cpu,
+                cache.objtype,
+                req.text,
+                '1 Execution count' as typeOf,
+                row_number() OVER (ORDER BY stat.execution_count desc) as rownum
+from sys.dm_exec_query_stats AS stat
+CROSS APPLY sys.dm_exec_sql_text(stat.sql_handle) as req
+CROSS APPLY    sys.dm_exec_query_plan(stat.plan_handle)    AS pl
+left join sys.dm_exec_cached_plans as cache on cache.plan_handle = stat.plan_handle
+
+WHERE    OBJECT_NAME((SELECT OBJECTID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) IS NOT NULL 
+         AND DB_NAME((SELECT DBID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))) = 'CommanderMessageQueue'
+                                                                       
+--ORDER BY DB_NAME((SELECT DBID
+--                  FROM   SYS.DM_EXEC_SQL_TEXT (stat.sql_handle ))),
+--         TOTAL_WORKER_TIME / EXECUTION_COUNT DESC
+         
+         order by execution_count desc
+)
+as stat
+order by typeof, rownum
+
+
+
+-----------------------
+
+
+SELECT   TOP 100 [OBJECT_NAME] = OBJECT_NAME((SELECT [OBJECTID]
+                                              FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE ))),
+                 CREATION_TIME,
+                 LAST_EXECUTION_TIME,
+                 
+                 AVG_CPU_TIME = (TOTAL_WORKER_TIME / EXECUTION_COUNT) / 1000,
+                 MIN_CPU_TIME = MIN_WORKER_TIME / 1000,
+                 MAX_CPU_TIME = MAX_WORKER_TIME / 1000,
+                 LAST_CPU_TIME = LAST_WORKER_TIME / 1000,
+                 TOTAL_TIME_ELAPSED = TOTAL_ELAPSED_TIME / 1000,
+                 AVG_TIME_ELAPSED = (TOTAL_ELAPSED_TIME / EXECUTION_COUNT) / 1000,
+                 MIN_TIME_ELAPSED = MIN_ELAPSED_TIME / 1000,
+                 MAX_TIME_ELAPSED = MAX_ELAPSED_TIME / 1000,
+                 AVG_PHYSICAL_READS = TOTAL_PHYSICAL_READS / EXECUTION_COUNT,
+                 AVG_LOGICAL_READS = TOTAL_LOGICAL_READS / EXECUTION_COUNT,
+                 EXECUTION_COUNT,
+                 
+                 SUBSTRING((SELECT [TEXT]
+                            FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE )),
+                           (QS.STATEMENT_START_OFFSET / 2) + 1,((CASE STATEMENT_END_OFFSET 
+                                                                   WHEN -1 THEN DATALENGTH((SELECT [TEXT]
+                                                                                            FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE )))
+                                                                   ELSE QS.STATEMENT_END_OFFSET
+                                                                 END - QS.STATEMENT_START_OFFSET) / 2) + 1) AS STATEMENT_TEXT
+                 
+FROM     SYS.DM_EXEC_QUERY_STATS QS
+WHERE    OBJECT_NAME((SELECT OBJECTID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE ))) IS NOT NULL 
+         AND DB_NAME((SELECT DBID
+                      FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE ))) = 'CommanderMessageQueue'
+                                                                       
+ORDER BY DB_NAME((SELECT DBID
+                  FROM   SYS.DM_EXEC_SQL_TEXT (QS.SQL_HANDLE ))),
+         TOTAL_WORKER_TIME / EXECUTION_COUNT DESC

@@ -1,0 +1,21 @@
+
+DECLARE @qry varchar(8000)
+
+SELECT @qry='SELECT scheduler_id,cpu_id,status,is_online,is_idle
+FROM sys.dm_os_schedulers
+WHERE scheduler_id < 255  order by cpu_id asc'
+
+EXEC msdb.dbo.sp_send_dbmail
+    @recipients='Viswaratha.Reddy@dieboldnixdorf.com;Ashish.Gupta@dieboldnixdorf.com',
+    @subject='Idle CPU Analysis- CSV Extract', 
+    @profile_name = N'SqlMail Profile',
+    @body='See attachment; Refer - https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-os-schedulers-transact-sql?view=sql-server-2017',
+    @query =@qry,
+    @attach_query_result_as_file = 1,
+    @query_attachment_filename = 'CSV_Extract.csv',
+    @query_result_separator = ',',
+    @query_result_width = 32767,
+    @query_result_no_padding = 1
+    
+
+
